@@ -31,7 +31,6 @@ import socket
 import base64
 import subprocess
 
-registry_conn = None
 torrent_session = None
 etcd_client = None
 
@@ -78,9 +77,12 @@ def try_torrent(checksum):
     except etcd.EtcdKeyNotFound:
         print("Torrent for %s not found" % checksum)
         return None
+    except etcd.EtcdConnectionFailed:
+        print("Failed to connect to the etcd server, giving up on torrent")
+        return None
 
-    tmp_torrent = os.path.join("storage/tmp", checksum.replace("sha256:", "") + ".torrent")
-    dst_torrent = os.path.join("storage/torrents", checksum.replace("sha256:", "") + ".torrent")
+    tmp_torrent = os.path.join("storage/tmp", checksum + ".torrent")
+    dst_torrent = os.path.join("storage/torrents", checksum + ".torrent")
     with open(tmp_torrent, "wb") as f:
         f.write(torrent_file)
     ti = torrent.torrent_info(tmp_torrent)
@@ -121,9 +123,10 @@ class MirrorHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         self.wfile = socket._fileobject(self.request, "wb", self.wbufsize)
 
     def get_location(self, destination_url, is_registry=True, blob_name=None):
-        global registry_conn
         original_host = self.headers.getheader("Host")
+        # for a docker blob, try the torrent only if there is an Authorization header in the request
         is_docker_blob = "/blobs/" in destination_url and "authorization" in self.headers
+        # for an ostree blob, try the torrent only for deltas, except the superblock file
         is_ostree_blob = "/deltas/" in destination_url and not "superblock" in destination_url
 
         send_file = None
@@ -137,7 +140,6 @@ class MirrorHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 blob_name = destination_url[destination_url.rfind("/deltas/")+8:].replace('/', "")
 
         if is_docker_blob or is_ostree_blob:
-
             stored_file = os.path.join("storage/blobs/", blob_name)
             if os.path.exists(stored_file):
                 send_file = stored_file
@@ -183,30 +185,27 @@ class MirrorHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 for k in res.headers:
                     headers[k.lower()] = res.headers[k]
         else:
-            while True:
-                try:
-                    req_headers = {}
-                    for k in self.headers:
-                        val = self.headers.get(k)
-                        if original_host in val.lower():
-                            val = val.lower().replace(original_host, REGISTRY_LOCATION)
-                        req_headers[k] = val
+            try:
+                req_headers = {}
+                for k in self.headers:
+                    val = self.headers.get(k)
+                    if original_host in val.lower():
+                        val = val.lower().replace(original_host, REGISTRY_LOCATION)
+                    req_headers[k] = val
 
-                    if registry_conn == None:
-                        host, port = REGISTRY_LOCATION.split(':') if ':' in REGISTRY_LOCATION else (REGISTRY_LOCATION, 443)
-                        registry_conn = httplib.HTTPSConnection(host, port)
+                host, port = REGISTRY_LOCATION.split(':') if ':' in REGISTRY_LOCATION else (REGISTRY_LOCATION, 443)
+                registry_conn = httplib.HTTPSConnection(host, port)
 
-                    registry_conn.request('GET', destination_url, headers=req_headers)
-                    res = registry_conn.getresponse()
-                    res_code = res.status
-                    headers = {}
-                    for k, v in res.getheaders():
-                        headers[k] = v
-                except httplib.HTTPException, e:
-                    registry_conn = None
-                    continue
-                break
+                registry_conn.request('GET', destination_url, headers=req_headers)
+                res = registry_conn.getresponse()
+                res_code = res.status
+                headers = {}
+                for k, v in res.getheaders():
+                    headers[k] = v
+            except httplib.HTTPException, e:
+                res_code = e.code
 
+        # if Location is present, resolve it internally.
         if is_docker_blob and "location" in headers:
             location = headers["location"]
             self.get_location(location, is_registry=False, blob_name=blob_name)
