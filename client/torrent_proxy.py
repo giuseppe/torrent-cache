@@ -29,10 +29,17 @@ import etcd # python2-python-etcd.noarch
 import sys
 import socket
 import base64
+import subprocess
 
 registry_conn = None
 torrent_session = None
 etcd_client = None
+
+def fsync(directory):
+    with open("/dev/null", "rw") as DEVNULL:
+        subprocess.check_call(["sync", "--file-system", directory], stdin=DEVNULL,
+                              stdout=DEVNULL,
+                              stderr=DEVNULL)
 
 def add_torrent(f):
     ti = torrent.torrent_info(f)
@@ -93,8 +100,11 @@ def try_torrent(checksum):
 
     src = os.path.join("storage/tmp", checksum)
     dst = os.path.join("storage/blobs", checksum)
+    fsync("storage/tmp")
     shutil.move(src, dst)
     shutil.move(tmp_torrent, dst_torrent)
+    fsync("storage/blobs")
+    fsync("storage/torrents")
 
     torrent_session.remove_torrent(handle)
 
