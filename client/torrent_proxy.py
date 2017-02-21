@@ -30,6 +30,7 @@ import sys
 import socket
 import base64
 import subprocess
+import signal
 
 torrent_session = None
 etcd_client = None
@@ -250,12 +251,18 @@ class MirrorHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                      shutil.move(os.path.join("storage/tmp", blob_name), os.path.join("storage/blobs", blob_name))
                      create_torrent(blob_name, os.path.join("storage/blobs", blob_name))
 
+def main_exit(signum, frame):
+    sys.exit(0)
+
 if __name__ == '__main__':
     for i in ["storage/tmp", "storage/torrents", "storage/blobs"]:
         try:
             os.makedirs(i)
         except OSError:
             pass
+
+    signal.signal(signal.SIGINT, main_exit)
+    signal.signal(signal.SIGTERM, main_exit)
 
     PORT = int(os.environ.get("PORT", "8888"))
     INTERFACE = os.environ.get("INTERFACE", "0.0.0.0")
