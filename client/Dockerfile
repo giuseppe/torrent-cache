@@ -11,4 +11,6 @@ EXPOSE 8888
 EXPOSE 6881-6891
 VOLUME /storage
 
+COPY system-container/manifest.json system-container/config.json.template system-container/service.template system-container/tmpfiles.template /exports/
+
 CMD /init.sh

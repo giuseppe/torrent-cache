@@ -1,0 +1,187 @@
+{
+	"ociVersion": "1.0.0",
+	"platform": {
+		"os": "linux",
+		"arch": "amd64"
+	},
+	"process": {
+		"terminal": false,
+		"consoleSize": {
+			"height": 0,
+			"width": 0
+		},
+		"user": {
+			"uid": 0,
+			"gid": 0
+		},
+		"args": [
+			"/init.sh"
+		],
+		"env": [
+			"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+			"TERM=xterm",
+                        "INTERFACE=$INTERFACE",
+                        "REGISTRY_NO_SSL=$REGISTRY_NO_SSL",
+                        "REGISTRY_LOCATION=$REGISTRY_LOCATION",
+                        "TRACKER=$TRACKER",
+                        "ETCD_HOST=$ETCD_HOST",
+                        "ETCD_PORT=$ETCD_PORT",
+                        "TORRENT_FIRST_PORT=$TORRENT_FIRST_PORT",
+                        "TORRENT_LAST_PORT=$TORRENT_LAST_PORT",
+                        "CERTFILE=$CERTFILE",
+                        "PRIVATEKEY=$PRIVATEKEY"
+                ],
+		"cwd": "/",
+		"capabilities": [
+			"CAP_AUDIT_WRITE",
+			"CAP_KILL",
+			"CAP_NET_BIND_SERVICE"
+		],
+		"rlimits": [
+			{
+				"type": "RLIMIT_NOFILE",
+				"hard": 1024,
+				"soft": 1024
+			}
+		],
+		"noNewPrivileges": true
+	},
+	"root": {
+		"path": "rootfs",
+		"readonly": true
+	},
+	"mounts": [
+		{
+			"destination": "/proc",
+			"type": "proc",
+			"source": "proc"
+		},
+		{
+			"destination": "/dev",
+			"type": "tmpfs",
+			"source": "tmpfs",
+			"options": [
+				"nosuid",
+				"strictatime",
+				"mode=755",
+				"size=65536k"
+			]
+		},
+		{
+			"destination": "/dev/pts",
+			"type": "devpts",
+			"source": "devpts",
+			"options": [
+				"nosuid",
+				"noexec",
+				"newinstance",
+				"ptmxmode=0666",
+				"mode=0620",
+				"gid=5"
+			]
+		},
+		{
+			"destination": "/dev/shm",
+			"type": "tmpfs",
+			"source": "shm",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev",
+				"mode=1777",
+				"size=65536k"
+			]
+		},
+		{
+			"destination": "/dev/mqueue",
+			"type": "mqueue",
+			"source": "mqueue",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev"
+			]
+		},
+		{
+			"destination": "/sys",
+			"type": "sysfs",
+			"source": "sysfs",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev",
+				"ro"
+			]
+		},
+		{
+			"destination": "/sys/fs/cgroup",
+			"type": "cgroup",
+			"source": "cgroup",
+			"options": [
+				"nosuid",
+				"noexec",
+				"nodev",
+				"relatime",
+				"ro"
+			]
+		},
+		{
+			"destination": "/etc/torrent-proxy/ssl",
+			"source": "${STATE_DIRECTORY}/${NAME}/key",
+			"type": "bind",
+			"options": [
+				"bind",
+				"rw",
+				"mode=755"
+			]
+		},
+		{
+			"destination": "${STATE_DIRECTORY}/storage",
+			"source": "${STATE_DIRECTORY}/${NAME}/storage",
+			"type": "bind",
+			"options": [
+				"bind",
+				"rw",
+				"mode=755"
+			]
+		}
+	],
+	"hooks": {},
+	"linux": {
+		"resources": {
+			"devices": [
+				{
+					"allow": false,
+					"access": "rwm"
+				}
+			]
+		},
+		"namespaces": [
+			{
+				"type": "pid"
+			},
+			{
+				"type": "ipc"
+			},
+			{
+				"type": "mount"
+			}
+		],
+		"maskedPaths": [
+			"/proc/kcore",
+			"/proc/latency_stats",
+			"/proc/timer_list",
+			"/proc/timer_stats",
+			"/proc/sched_debug",
+			"/sys/firmware"
+		],
+		"readonlyPaths": [
+			"/proc/asound",
+			"/proc/bus",
+			"/proc/fs",
+			"/proc/irq",
+			"/proc/sys",
+			"/proc/sysrq-trigger"
+		]
+	}
+}

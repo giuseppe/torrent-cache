@@ -1,0 +1,2 @@
+d    ${STATE_DIRECTORY}/${NAME}/storage   0700 ${HOST_UID} ${HOST_GID} - -
+d    ${STATE_DIRECTORY}/${NAME}/key   0700 ${HOST_UID} ${HOST_GID} - -

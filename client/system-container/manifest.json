@@ -1,0 +1,16 @@
+{
+    "version": "1.0",
+    "defaultValues": {
+        "PORT": "8888",
+        "INTERFACE": "0.0.0.0",
+        "REGISTRY_NO_SSL": "",
+        "REGISTRY_LOCATION": "registry-1.docker.io",
+        "TRACKER": "http://192.168.1.1:6969/announce",
+        "ETCD_HOST": "192.168.1.1",
+        "ETCD_PORT": "2378",
+        "TORRENT_FIRST_PORT": "6881",
+        "TORRENT_LAST_PORT": "6891",
+        "CERTFILE": "/etc/torrent-proxy/ssl/cert.pem",
+        "PRIVATEKEY": "/etc/torrent-proxy/ssl/key.pem"
+    }
+}
