@@ -83,6 +83,10 @@ def try_torrent(checksum):
 
     tmp_torrent = os.path.join("storage/tmp", checksum + ".torrent")
     dst_torrent = os.path.join("storage/torrents", checksum + ".torrent")
+    for i in [tmp_torrent, dst_torrent]:
+        if not os.path.exists(i):
+            os.makedirs(i)
+
     with open(tmp_torrent, "wb") as f:
         f.write(torrent_file)
     ti = torrent.torrent_info(tmp_torrent)
@@ -269,6 +273,8 @@ if __name__ == '__main__':
 
     torrent_session = torrent.session()
     torrent_session.listen_on(TORRENT_FIRST_PORT, TORRENT_LAST_PORT)
+    if not os.path.exists("storage/torrents"):
+        os.makedirs("storage/torrents")
     for f in os.listdir("storage/torrents"):
         add_torrent(os.path.join("storage/torrents", f))
 
