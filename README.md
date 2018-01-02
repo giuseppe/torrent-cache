@@ -83,6 +83,8 @@ For a test you can try to fetch an image via Skopeo as:
 
 `skopeo --tls-verify=false layers docker://localhost:8888/library/fedora`
 
+<!--- TODO -->
+
 # Improvements
 
 - Use a real HTTP proxy instead of the Python hack implementation.
@@ -97,3 +99,5 @@ For a test you can try to fetch an image via Skopeo as:
 - Keep local torrents in sync with the images currently available.
 
 - Alternatively, implement a way to remove old/unused torrents.
+
+- Modify the registry to pass on the Torrent file.
